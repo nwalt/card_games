@@ -7,13 +7,17 @@ def right_pad(string, length, character):
     add_len = length - len(string)
     return f'{string}{character * add_len}'
 
-def validate_selection(statement, acceptable_characters):
+def validate_character(char, acceptable_characters):
     while True:
-        check = input(statement)
-        if (check in acceptable_characters):
-            return check
-        else:
+        check = input(char)
+        if len(check > 1):
+            print('Please enter only one character')
+            continue
+        if check not in acceptable_characters:
             print('Invalid selection, try again')
+            continue
+        return check
+
 
 class Card():
     """Standard playing card. 
@@ -24,7 +28,17 @@ class Card():
     values_long = {
         'A':'Ace','2':'Two','3':'Three','4':'Four','5':'Five','6':'Six',
         '7':'Seven','8':'Eight','9':'Nine','10':'Ten','J':'Jack','Q':'Queen',
-        'K':'King'}
+        'K':'King'
+        }
+    values_plural = {
+        'A':'Aces','2':'Twos','3':'Threes','4':'Fours','5':'Fives','6':'Sixes',
+        '7':'Sevens','8':'Eights','9':'Nines','10':'Tens','J':'Jacks',
+        'Q':'Queens','K':'Kings'
+        }
+    point_values = {
+        'A':14,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,
+        'Q':12,'K':13
+        }
     def __init__(self, suit=None, value=None):
         if (suit):
             self.suit = suit
@@ -42,6 +56,7 @@ class Card():
         return self.name
     def __str__(self):
         return self.long_name
+
 
 class Deck():
     """Class representing standard deck(s) of cards."""
@@ -75,6 +90,7 @@ class Deck():
 
     def reset(self):
         self.cards = self.ini_cards
+
 
 class Player():
     """Card Game Player"""
@@ -112,15 +128,17 @@ class Player():
         else:
             raise Exception(f'Player {self.name} does not have any hands!')
 
+
 class Dealer(Player):
     pass
+
 
 class BlackJackHand():
     """Class representing a blackjack-specific hand"""
     bj_scores = {
         'A':11,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,
-        '8':8,'9':9,'10':10,'J':10,'Q':10,'K':10}
-
+        '8':8,'9':9,'10':10,'J':10,'Q':10,'K':10
+        }
     def __init__(self):
         self.cards = []
         self.score = 0
@@ -132,13 +150,31 @@ class BlackJackHand():
     def __repr__(self):
         return str(self.cards)
 
+    def reset(self):
+        self.cards = []
+        self.card_list = []
+        self.score = 0
+        self.acse = 0
+        self.aces_converted = 0
+        self.bust = False
+        self.blackjack = False
+
+    def list_cards(self):
+        """Cast cards in hand to list of strings
+        For easy printing"""
+        card_list = [x.name for x in self.cards]
+        if (card_list is not None):
+            return card_list
+        else:
+            return[]
+
     def draw(self,deck):
         """Draw a card, evaluate, and add to score"""
         self.cards.append(deck.cards.pop())
         if (self.cards[-1].value == 'A'):
             self.aces += 1
         self.score += BlackJackHand.bj_scores[self.cards[-1].value]
-        #Apparently this isn't real, despite me playing this way my whole life
+        #Apparently the below isn't real, despite playing this way my whole life
         # #if you draw a blackjack, score is 21 automatically
         # if (self.cards[-1].suit in ('S','C') and self.cards[-1].value == 'J'):
         #     self.score = 21
@@ -155,23 +191,6 @@ class BlackJackHand():
             self.bust = True
         self.card_list = self.list_cards()
 
-    def list_cards(self):
-        """Cast cards in hand to list of strings
-        For easy printing"""
-        card_list = [x.name for x in self.cards]
-        if (card_list is not None):
-            return card_list
-        else:
-            return[]
-
-    def reset(self):
-        self.cards = []
-        self.card_list = []
-        self.score = 0
-        self.acse = 0
-        self.aces_converted = 0
-        self.bust = False
-        self.blackjack = False
 
 class BlackJack():
     """Main class for running a blackjack game"""
@@ -331,7 +350,7 @@ class BlackJack():
             if (player.out):
                 continue
             else:
-                hit = validate_selection(
+                hit = validate_character(
                     f'{player.name}, Hit or Stand? h/s: ', 'hs')
             if (hit == 'h'):
                 player.draw(self.deck)
@@ -367,13 +386,203 @@ class BlackJack():
         print(f'{self.dealer.name} stands\n')
         time.sleep(1)
 
-if (__name__ == '__main__'):
-    GAMES = {'1':BlackJack}
+
+class PokerHand():
+    """Poker-specific hand"""
+    hand_types = {
+        'royal':10, 's_flush':9, 'four_kind':8, 'full_house':7, 'flush':6, 
+        'straight':5, 'three_kind':4, 'two_pair':3, 'pair':2, 'high_card':1
+        }
+    hand_types_long = {
+        'royal':'Royal Flush', 's_flush':'Straight Flush', 
+        'four_kind':'Four of a Kind', 'full_house':'Full House', 
+        'flush':'Flush', 'straight':'Straight', 
+        'three_kind':'Three of a Kind', 'two_pair':'Two Pair', 'high_card':''
+        }
+
+    def __init__(self):
+        self.cards = []
+        self.shared_cards = [] #for hold'em
+        self.final_cards = [] #selected from cards and shared in hold'em
+        self.type = 'high_card' #hand type string, default lowest
+        self.score = 1
+        self.high_card = None #highest value card
+
+    def __repr__(self):
+        temp = (
+            f'{self.cards} {PokerHand.hand_types_long[self.type]}, '
+            f'{self.high_card.long_name} High')
+        return temp
+
+    def reset(self):
+        self.cards = []
+        self.shared_cards = []
+        self.final_cards = []
+        self.type = 'high_card'
+        self.score = 1
+        self.high_card = None
+
+    def list_cards(self):
+        """Cast cards in hand to list of strings
+        For easy printing"""
+        card_list = [x.name for x in self.cards]
+        if (card_list is not None):
+            return card_list
+        else:
+            return[]
+
+    def draw(self, deck):
+        """Draw one card from the deck"""
+        self.cards.append(deck.cards.pop())
+
+    def eval_hand(self):
+        """Identify the score of this hand"""
+        points = [Card.point_values[card.value] for card in self.cards]
+        self.high_card = self.cards[points.index(max(points))]
+        #How many suits are in the hand?
+        suit_counts = {'S':0,'H':0,'C':0,'D':0}
+        for card in self.cards:
+            suit_counts[card.suit] +=1
+        #How many of each value are in the hand?
+        value_counts = {
+        'A':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'J':0,
+        'Q':0,'K':0}
+        for card in self.cards:
+            value_counts[card.value] += 1
+
+        #if we only have one suit in the hand, we have a flush
+        if ([x != 0 for x in suit_counts.values()].count(True) == 1):
+            flush = True
+        else:
+            flush = False
+
+        # if we never have more than 1 of a value, we might have a straight
+        value_count_list = list(value_counts.values())
+        aces_high_list = value_count_list[1:]
+        aces_high_list.append(value_count_list[0])
+        if (True in [x > 1 for x in value_count_list]):
+            straight = False
+        else:
+            #generate a binary number representing the point values in the hand
+            #with aces low
+            value_mask_str_low = '0b'
+            for x in value_count_list:
+                value_mask_str_low += str(x)
+            value_mask_low = int(value_mask_str_low, 2)
+            #with aces high
+            value_mask_str_high = '0b'
+            for x in aces_high_list:
+                value_mask_str_high += str(x)
+            value_mask_high = int(value_mask_str_high, 2)
+            # if our aces high number off the bat is 0b0000000011111 and is flush
+            # we have a royal flush!
+            if (value_mask_high == 31 and flush == True):
+                self.type == 'royal'
+                self.score == PokerHand.hand_types[self.type]
+                return
+            #bitshift the mask and check to see if we have a sequence
+            for x in range(0, 9):
+                if (
+                    (value_mask_low >> x) == 31 or
+                    (value_mask_high >> x) == 31):
+                    straight = True
+                    break
+        if (straight and flush):
+            self.type = 's_flush'
+            self.score = PokerHand.hand_types[self.type]
+            return
+        if (value_count_list.count(4) == 1):
+            self.type = 'four_kind'
+            self.score = PokerHand.hand_types[self.type]
+            return
+        if (
+            value_count_list.count(3) == 1 and 
+            value_count_list.count(2) == 1):
+            self.type = 'full_house'
+            self.score = PokerHand.hand_types[self.type]
+            return
+        if (flush):
+            self.type = 'flush'
+            self.score = PokerHand.hand_types[self.type]
+            return
+        if (straight):
+            self.type = 'straight'
+            self.score = PokerHand.hand_types[self.type]
+            return
+        if (value_count_list.count(2) == 2):
+            self.type = 'two_pair'
+            self.score = PokerHand.hand_types[self.type]
+            return
+        if (value_count_list.count(2) == 1):
+            self.type = 'pair'
+            self.score = PokerHand.hand_types[self.type]
+            return
+
+
+
+class FiveCard():
+    """Game runner class for Five Card Draw"""
+    def __init__(self):
+        
+        pass
+    
+    def __repr__(self):
+        return 'Five Card Draw'
+    def __str__(self):
+        return 'Five Card Draw'
+
+    @classmethod
+    def name(cls):
+        """Return the name of the class as a string.
+        Classmethod so it can be used without an instance
+        """
+        return 'Five Card Draw'
+
+
+class TexasHoldem():
+    """Game runner class for Texas Hold'em"""
+    def __init__(self):
+        #what do we need for a game of this?
+        pass
+    
+    def __repr__(self):
+        return "Texas Hold'em"
+    def __str__(self):
+        return "Texas Hold'em"
+
+    @classmethod
+    def name(cls):
+        """Return the name of the class as a string.
+        Classmethod so it can be used without an instance
+        """
+        return "Texas Hold'em"
+
+class Poker():
+    """Prompt the user to pick a poker subtype"""
+    POKER_GAMES = {'1':FiveCard, '2':TexasHoldem}
+
+    def __init__(self):
+        pass
+
+    def run(self):
+        print('Poker Types:')
+        for key in POKER_GAMES:
+            print(f'{key}> {POKER_GAMES[key].name()}')
+        poker_number = validate_character(
+            "Enter the number for the type of poker you'd like to play: ", 
+            '12')
+        poker = POKER_GAMES[poker_number].run()
+
+def main():
+    GAMES = {'1':BlackJack, '2':Poker, '3':Solitaire}
     print('What game would you like to play? Current Options:')
     for key in GAMES:
         print(f'{key}> {GAMES[key].name()}')
-    game_number = validate_selection(
-        'Enter the number for the game you want: ', '1')
+    game_number = validate_character(
+        'Enter the number for the game you want: ', '123')
     #Initialize the class of the chosen game
     game = GAMES[game_number]()
     game.run()
+
+if (__name__ == '__main__'):
+    main()
