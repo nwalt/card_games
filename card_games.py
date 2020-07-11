@@ -463,7 +463,7 @@ class PokerHand():
         if (True in [x > 1 for x in value_count_list]):
             straight = False
         else:
-            #generate a binary number representing the point values in the hand
+            #generate a binary number representing the point values in hand
             #with aces low
             value_mask_str_low = '0b'
             for x in value_count_list:
@@ -474,19 +474,19 @@ class PokerHand():
             for x in aces_high_list:
                 value_mask_str_high += str(x)
             value_mask_high = int(value_mask_str_high, 2)
-            # if our aces high number off the bat is 0b0000000011111 and is flush
+            # if our aces high number is 0b0000000011111 and is flush
             # we have a royal flush!
             if (value_mask_high == 31 and flush == True):
                 self.type == 'royal'
                 self.score == PokerHand.hand_types[self.type]
                 return
-            #bitshift the mask and check to see if we have a sequence
-            for x in range(0, 9):
-                if (
-                    (value_mask_low >> x) == 31 or
-                    (value_mask_high >> x) == 31):
-                    straight = True
-                    break
+            #check to see if the value masks equate to any binary number with
+            #all 1's next to eachother
+            sequence_bins = (31,62,124,248,496,992,1984,3968,7936)
+            if (value_mask_low in sequence_bins or 
+                value_mask_high in sequence_bins):
+                straight = True
+
         if (straight and flush):
             self.type = 's_flush'
             self.score = PokerHand.hand_types[self.type]
@@ -495,8 +495,7 @@ class PokerHand():
             self.type = 'four_kind'
             self.score = PokerHand.hand_types[self.type]
             return
-        if (
-            value_count_list.count(3) == 1 and 
+        if (value_count_list.count(3) == 1 and 
             value_count_list.count(2) == 1):
             self.type = 'full_house'
             self.score = PokerHand.hand_types[self.type]
@@ -517,7 +516,6 @@ class PokerHand():
             self.type = 'pair'
             self.score = PokerHand.hand_types[self.type]
             return
-
 
 
 class FiveCard():
