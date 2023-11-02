@@ -83,17 +83,10 @@ class BlackJack():
             print(f'{self.dealer.name} has ${self.dealer.money}')
             for player in self.players:
                 player.prompt_bet()
-                # temp_bet = 0
-                # while temp_bet == 0:
-                #     temp_bet = int(input(
-                #         f'{player.name}, you have ${player.money}.'
-                #         ' Place your bet: '))
-                #     if (temp_bet == 0):
-                #         print('You cannot place a zero bet, try again')
-                # player.bet = temp_bet
+            print('')
             self.deal()
             self.display_table()
-            time.sleep(1)
+            time.sleep(0.5)
             player_scores = [x.hand.score for x in self.players]
             if (21 not in player_scores and self.dealer.hand.score != 21):
                 pass
@@ -111,7 +104,7 @@ class BlackJack():
                         self.dealer.money += player.bet
                     elif (player.score == 21):
                         print(f'{player.name} also has 21 and loses nothing.')
-                    time.sleep(1)
+                    time.sleep(0.5)
                 print('Round Over...')
                 continue 
             elif (21 in player_scores):
@@ -123,16 +116,16 @@ class BlackJack():
                         self.dealer.money += -(player.bet * 1.5) 
                         player.bet = 0
                         player.out = True
-                        time.sleep(1)
+                        time.sleep(0.5)
             players_in = [x.out for x in self.players]
             while (False in players_in):
                 players_in = self.hit_loop()
                 if (False in players_in):
                     self.display_table()
-                time.sleep(1)
+                time.sleep(0.5)
             print(f'{self.dealer.name} reveals their face down card...')
             self.display_table(reveal_dealer=True)
-            time.sleep(1)
+            time.sleep(0.5)
             print(f'{self.dealer.name} plays...')
             self.dealer_play_loop()
             if (self.dealer.hand.bust == True):
@@ -142,7 +135,7 @@ class BlackJack():
             #final score print and win calc
             for player in self.players:
                 if (player.bet != 0):
-                    time.sleep(1)
+                    time.sleep(0.5)
                     print(f'{right_pad(player.name, 12, " ")}: '
                         f'Score: {player.hand.score}')
                     if (player.hand.score > self.dealer.hand.score):
@@ -157,7 +150,7 @@ class BlackJack():
                             f'and forfeits ${player.bet}.')
                         player.money += -(player.bet)
                         self.dealer.money += player.bet
-                    time.sleep(1)
+                    time.sleep(0.5)
             print('Round Over...')
 
     def hit_loop(self):
@@ -207,4 +200,6 @@ class BlackJack():
                 break
 
 class BlackJackOnline(BlackJack):
-    pass
+    """Represent an online blackjack game."""
+    def __init__(self, *args, **kwargs):
+        super().__init__()

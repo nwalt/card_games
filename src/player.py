@@ -180,10 +180,10 @@ class AIPlayer(Player):
     def reset_hand(self, timeout):
         self.reset()
 
-    def prompt_play(self, game_type, game_state, timeout):
+    def prompt_play(self, hand, game_state):
         """Request a play from an AI player. 
         Different AI based on game"""
-        pass
+        return self.ai.calculate_action(hand, game_state)
 
     def bet(self, amt):
         self.bet = amt

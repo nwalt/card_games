@@ -33,16 +33,19 @@ class FiveCard():
 
     def register_players(self):
         self.players = []
-        p1name = input('Human Player, what is your name? ')
+        num_human_players = int(input('How many people are playing? (Remainder will be CPU) '))
+        for i in range(1, num_human_players):
+            pname = input(f'Human player {i}, what is your name? ')
+            self.players.append(Player(pname, self.start_money))
         for i in range(1, self.num_players):
             self.players.append(AIPlayer(f'CPU Player {i}', self.start_money))
-        self.players.append(Player(p1name, self.start_money))
         self.remote_players = False
 
     def show_game_state(self):
         print(f'Players in: {[x for x in self.players_in]}')
         for player in self.players:
             print(f'{player.name} Current bet: ${player.bet}')
+
 
     def run(self):
         self.keep_playing = True
@@ -62,7 +65,6 @@ class FiveCard():
             for player in self.players:
                 reset_dict[player] = reset_exec.submit(
                     player.reset_hand, 60)
-                #perhaps reset.exec.wait() ?
         #After 60 seconds all threads _should_ have reset or raised
         #this risks hanging main thread if one of the threads hangs
         for player in reset_dict:
@@ -100,6 +102,7 @@ class FiveCard():
         self.show_game_state()
 
         #first bet phase
+        bets_not_equal = True
         while (bets_not_equal == True and len(self.players_in) > 1):
             #start with the player ahead of big blind
             bet_order = [x for x in range(2, len(self.players_in) + 1)] + [0, 1]
@@ -114,13 +117,14 @@ class FiveCard():
                             f'Waiting on {self.players[i].name} to play... ', 
                             60))
                     bet_dict[self.players[i]] = bet_pool.submit(
-                        self.players[i].prompt_turn('poker', self, 60))
+                        self.players[i].prompt_play(self, 60))
                 for player in bet_dict:
                     if (bet_dict[player].result != 0):
                         player.kick()
                         self.players.remove(player)
-
-
+            bets_not_equal = not (all(
+                [bet_dict[x] == bet_dict[self.players[0]] for x in bet_dict]
+            ))
 
         #poll players for first draw phase
         #poll players for second bet phase
@@ -135,5 +139,5 @@ class FiveCardOnline(FiveCard):
     
     def register_players(self):
         #register players through the online lobby instead of all ai opponents
-        #set up a custom page on github for this
+        #set up a lobby server on a webserver
         pass
