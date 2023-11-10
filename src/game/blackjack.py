@@ -1,4 +1,6 @@
 import time
+import concurrent.futures
+from functools import partial
 
 from src.util import right_pad, validate_character
 from src.card import Deck
@@ -8,6 +10,9 @@ from src.ai.blackjack import BlackJackAI
 
 class BlackJack():
     """Main class for running a blackjack game"""
+
+    name = 'BlackJack'
+
     def __init__(self):
         self.dealer = AIPlayer('House', 50000, ai=BlackJackAI(level='dealer'))
         self.dealer.hand = BlackJackHand()
@@ -28,12 +33,12 @@ class BlackJack():
     def __str__(self):
         return 'BlackJack'
 
-    @classmethod
-    def name(cls):
-        """Return the name of the class as a string.
-        Classmethod so it can be used without an instance
-        """
-        return 'BlackJack'
+    # @classmethod
+    # def name(cls):
+    #     """Return the name of the class as a string.
+    #     Classmethod so it can be used without an instance
+    #     """
+    #     return 'BlackJack'
 
     def register_players(self):
         self.players = []
@@ -81,8 +86,9 @@ class BlackJack():
             print(f'Round: {self.round_count}')
             print(f'Cards Left: {len(self.deck)}')
             print(f'{self.dealer.name} has ${self.dealer.money}')
-            for player in self.players:
-                player.prompt_bet()
+            with concurrent.futures.ThreadPoolExecutor() as bet_pool:
+                for player in self.players:
+                    bet_pool.submit(player.prompt_bet)
             print('')
             self.deal()
             self.display_table()
@@ -177,7 +183,10 @@ class BlackJack():
     def dealer_play_loop(self):
         while True:
             action = self.dealer.ai.calculate_action(
-                self.dealer.hand
+                self.dealer.hand,
+                # dealer doesn't need to know anything
+                # but what's in their hand
+                game_state=None
             )
             if action == 'hit':
                 self.dealer.draw(self.deck)
@@ -198,8 +207,3 @@ class BlackJack():
                 print(f'{self.dealer.name} stands\n')
                 time.sleep(0.5)
                 break
-
-class BlackJackOnline(BlackJack):
-    """Represent an online blackjack game."""
-    def __init__(self, *args, **kwargs):
-        super().__init__()
