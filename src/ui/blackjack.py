@@ -1,3 +1,4 @@
+import random
 import asyncio
 import threading
 from tkinter import ttk
@@ -11,18 +12,21 @@ class BlackJackUI(ttk.Frame):
 
     def __init__(self, root, game_select_frame):
         super().__init__(root)
+        self.root = root
         self.game_select_frame = game_select_frame
         self.grid(row=0, column=0)
         
         # draw some placeholder stuff. These likely removed later for real drawing
-        placeholder = ttk.Label(
+        self.placeholder = ttk.Label(
             self, text='blackjack'
-        ).grid(row=0, column=0)
+        )
+        self.placeholder.grid(row=0, column=0)
         # if the tkinter event loop is not blocked in the main thread, 
-        test_button = ttk.Button(
-            self, text="test btuton", command=self.print_smth
+        # the test button can work at any time
+        ttk.Button(
+            self, text="test button", command=self.print_smth
         ).grid(row=0, column=1)
-        stop_event_loop_button = ttk.Button(
+        ttk.Button(
             self, text="End Game", command=self.exit
         ).grid(row=0, column=2)
 
@@ -42,10 +46,16 @@ class BlackJackUI(ttk.Frame):
             daemon=True
         )
         self.game_loop_thread.start()
+        # asyncio thread can only send events to root, so all binds that react to 
+        # network or game loop activity must bind to root
+        root.bind('<<UpdateDisplay>>', self.draw_game)
 
-    def draw_game(self):
+    def draw_game(self, *args):
         # acquire lock, then draw the game
-        pass
+        # placeholder code to make sure it works...
+        print('Drawing game to display...')
+        rand_text = ''.join(random.choices(list('asdfqwertyuiop'), k=9))
+        self.placeholder['text'] = rand_text
 
     def print_smth(self):
         print('This message originated from the tk thread')
@@ -55,5 +65,6 @@ class BlackJackUI(ttk.Frame):
         stop_future = asyncio.run_coroutine_threadsafe(self.game_loop.set_stop_event(), self.async_loop)
         stop_future.result()
         self.game_loop_thread.join()
+        self.root.unbind('<<UpdateDisplay>>')
         self.grid_remove()
         self.game_select_frame.grid()
