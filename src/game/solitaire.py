@@ -1,15 +1,19 @@
-class Solitaire():
+from src.card import Card, Deck
+from src.game import GameData, GameLoop
+
+class SolitaireGame(GameData):
+    """Represents the game state of a solitaire game.
+
+    Effectively a dataclass.
+    """
+
     def __init__(self):
-        pass
+        self.deck = Deck()
+        self.deck.shuffle()
 
-    def __repr__(self):
-        return 'Solitaire'
-    def __str__(self):
-        return 'Solitaire'
 
-    @classmethod
-    def name(cls):
-        """Return the name of the class as a string.
-        Classmethod so it can be used without an instance
-        """
-        return 'BlackJack'
+class SolitaireLoop(GameLoop):
+    """Handle game events and update the game state"""
+
+    def __init__(self, tk_root, loop, game, game_lock):
+        super().__init__(tk_root, loop, game, game_lock)

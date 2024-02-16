@@ -5,16 +5,14 @@ from tkinter import ttk
 from threading import Lock
 
 from src.game.blackjack_new import BlackJackGame, BlackJackLoop
+from src.ui import GameUI
 
-class BlackJackUI(ttk.Frame):
+class BlackJackUI(GameUI):
 
     name = 'BlackJack'
 
     def __init__(self, root, game_select_frame):
-        super().__init__(root)
-        self.root = root
-        self.game_select_frame = game_select_frame
-        self.grid(row=0, column=0)
+        super().__init__(root, game_select_frame)
         
         # draw some placeholder stuff. These likely removed later for real drawing
         self.placeholder = ttk.Label(
