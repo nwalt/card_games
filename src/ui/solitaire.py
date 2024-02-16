@@ -66,22 +66,6 @@ class SolitaireUI(GameUI):
             }
             self.card_lookup[card_item] = card.name
         self.reset_card_positions(first_deal=True)
-        # tk and asyncio CANNOT exist in the same thread
-        # so we create an event loop, and send it to another thread to start
-        self.async_loop = asyncio.new_event_loop()
-        self.game_loop = SolitaireLoop(
-            tk_root=root, loop=self.async_loop, game=self.game_state, game_lock=self.game_lock,
-        )
-        self.game_loop_thread = threading.Thread(
-            name='solitaire_game_loop_thread', target=self.game_loop.main,
-            # daemon threads are killed ungracefully on main thread exit.
-            # Make sure they get cleaned up nicely instead
-            daemon=True
-        )
-        self.game_loop_thread.start()
-        # asyncio thread can only send events to root, so all binds that react to 
-        # network or game loop activity must bind to root
-        # root.bind('<<UpdateDisplay>>', self.draw_game)
         self.canvas.tag_bind('card', '<ButtonPress-1>', self.drag_start)
         self.canvas.tag_bind('card', '<ButtonRelease-1>', self.drag_stop)
         self.canvas.tag_bind('card', '<B1-Motion>', self.drag)
@@ -121,3 +105,7 @@ class SolitaireUI(GameUI):
         else:
             self.canvas.itemconfig(target_item, image=self.card_sprite_images_tk['BLUE_BACK'])
             target_card['img'] = 'BLUE_BACK'
+
+    def exit(self):
+        self.grid_remove()
+        self.game_select_frame.grid()
