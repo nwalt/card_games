@@ -2,6 +2,7 @@
 Simple card games implemented in object oriented style. 
 
 `python card_games_tk.py` to launch with a GUI
+
 `python card_games.py` to launch CLI
 
 # Solitaire
